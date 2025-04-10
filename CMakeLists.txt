@@ -56,7 +56,9 @@ add_executable(FluidSimulation main.cpp
         RenderLayer.cpp
         RenderLayer.h
         HelperFunctions.cpp
-        HelperFunctions.h)
+        HelperFunctions.h
+        Simulation.cpp
+        Simulation.h)
 
 
 target_link_libraries(FluidSimulation PRIVATE
