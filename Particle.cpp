@@ -1,5 +1,6 @@
 
 #include "Particle.h"
+#include "HelperFunctions.h"
 
 Particle::Particle() {
     //Set almost all to zero by default
@@ -26,6 +27,15 @@ void Particle::update(const float dt) {
     acceleration = force / mass;
     velocity += dt * acceleration;
     position += dt * velocity;
+
+    //update color based on velocity
+    //TODO: update color based on actual metric P/pgh
+    float speed = velocity.length();
+    float normalizedSpeed = std::min(speed / maxParticleSpeed, 1.0f);
+    float hue = 240 * (1 - normalizedSpeed); // Blue to red
+    color = HelperFunctions::HSVtoRGB(static_cast<int>(hue), 1, 1);
+    // Set the color based on the speed
+
 }
 
 void Particle::addForce(const Vec3 &force) {

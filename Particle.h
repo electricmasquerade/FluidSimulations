@@ -24,7 +24,7 @@ public:
         acceleration = Vec3(0, 0, 0);
         density = 0;
         pressure = 0;
-        color = {0,0,0};
+        color = {255,255,255}; // Default color white
     }
 
     void reset();
@@ -84,6 +84,9 @@ private:
     float density{};
     float pressure{};
     float smoothingLength{};
+
+    //Maximum speed for particles
+    float maxParticleSpeed = 50.0f; // Maximum speed for particles
 
 };
 
