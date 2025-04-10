@@ -8,23 +8,28 @@ set(IMGUI_VERSION "1.91.9b")
 set(SFML_VERSION "3.0.0")
 
 set (IMGUI_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include/imgui")
-set (BUILD_SHARED_LIBS ON)
+
 # Find SFML (assuming installed via Homebrew)
 #find_package(SFML 3 COMPONENTS Graphics Window System Audio REQUIRED)
 include(FetchContent)
-FetchContent_Declare(
-        SFML
-        URL "https://github.com/SFML/SFML/archive/refs/tags/${SFML_VERSION}.zip"
-)
 
-
+FetchContent_Declare(SFML
+        GIT_REPOSITORY https://github.com/SFML/SFML.git
+        GIT_TAG 3.0.0
+        GIT_SHALLOW ON
+        EXCLUDE_FROM_ALL
+        SYSTEM)
 FetchContent_MakeAvailable(SFML)
+
+
 
 FetchContent_Declare(
         imgui
         URL "https://github.com/ocornut/imgui/archive/v${IMGUI_VERSION}.zip"
 )
 FetchContent_MakeAvailable(imgui)
+
+
 add_library(imgui STATIC
         ${imgui_SOURCE_DIR}/imgui.cpp
         ${imgui_SOURCE_DIR}/imgui_draw.cpp
@@ -33,7 +38,7 @@ add_library(imgui STATIC
 
 )
 
-
+set(IMGUI_SFML_FIND_SFML OFF)
 FetchContent_Declare(
         imgui-sfml
         GIT_REPOSITORY https://github.com/SFML/imgui-sfml.git
