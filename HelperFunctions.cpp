@@ -1,5 +1,6 @@
 
 #include "HelperFunctions.h"
+#include <cmath>
 
 std::vector<int> HelperFunctions::HSVtoRGB(int hue, int sat, int val) {
     float c = val * sat;

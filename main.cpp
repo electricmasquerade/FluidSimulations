@@ -24,7 +24,7 @@ int main() {
 
 
     // Create many particles for testing
-    const int numParticles = 50000; // You can adjust this number as needed.
+    const int numParticles = 100000; // You can adjust this number as needed.
     std::vector<Particle> particles;
     particles.reserve(numParticles);
     for (int i = 0; i < numParticles; ++i) {
