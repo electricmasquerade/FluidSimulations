@@ -25,14 +25,14 @@ class Simulation {
 
 public:
     float smoothingFunction(float r, float h);
-    void buildSpatialMap(const std::vector<Particle> &particles);
-    std::vector<Particle> findNeighbors(const Particle &particle, const std::vector<Particle> &particles, float radius);
+    void buildSpatialMap(const std::vector<std::shared_ptr<Particle>> &particles);
+    std::vector<std::shared_ptr<Particle>> findNeighbors(const Particle &particle, const std::vector<std::shared_ptr<Particle>> &particles, float radius);
     void updateParticles(float dt);
 
 private:
-    std::vector<Particle> particles;
+    std::vector<std::shared_ptr<Particle>> particles;
     float cellSize{20.0f}; // Size of each cell in the grid, replace with smoothing length later
-    std::unordered_map<CellKey, std::vector<Particle>, CellKeyHash> spatialMap; // Hash map for spatial partitioning
+    std::unordered_map<CellKey, std::vector<std::shared_ptr<Particle>>, CellKeyHash> spatialMap; // Hash map for spatial partitioning
     //Create a struct to store the keys for the particle grid during spatial partitioning
 
 

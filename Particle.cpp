@@ -30,9 +30,9 @@ void Particle::update(const float dt) {
 
     //update color based on velocity
     //TODO: update color based on actual metric P/pgh
-    float speed = velocity.length();
-    float normalizedSpeed = std::min(speed / maxParticleSpeed, 1.0f);
-    float hue = 240 * (1 - normalizedSpeed); // Blue to red
+    const float speed = velocity.length();
+    const float normalizedSpeed = std::min(speed / maxParticleSpeed, 1.0f);
+    const float hue = 240 * (1 - normalizedSpeed); // Blue to red
     color = HelperFunctions::HSVtoRGB(static_cast<int>(hue), 1, 1);
     // Set the color based on the speed
 

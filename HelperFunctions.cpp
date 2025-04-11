@@ -44,3 +44,4 @@ std::vector<int> HelperFunctions::HSVtoRGB(int hue, int sat, int val) {
         static_cast<int>(255 * (b+m))
     };
 }
+
