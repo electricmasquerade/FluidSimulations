@@ -5,6 +5,7 @@
 #include "Particle.h"
 #include <cmath>
 #include <unordered_map>
+#include <memory>
 
 //Create hash functions and key structs for spatial partitioning
 struct CellKey {

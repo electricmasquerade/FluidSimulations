@@ -3,7 +3,7 @@
 
 float Simulation::smoothingFunction(const float r, const float h) { //r is the radius, h is the smoothing length
     // Implement the smoothing function here
-    // using poly6 kernel for now
+    // using poly6 kernel for now, only defined where r < h
     if (r < h) {
         const float weight = 315.0f / (64.0f * M_PI * std::pow(h, 9)) * std::pow(h * h - r * r, 3);
         return weight;
@@ -63,6 +63,9 @@ void Simulation::updateParticles(const float dt) {
             float distance = particle->getNeighborDistance(*neighbor);
             if (distance < particle->getSmoothingLength()) {
                 float weight = smoothingFunction(distance, particle->getSmoothingLength());
+                //Calculate the density of the particle
+                particle->setDensity(particle->getDensity() + neighbor->getDensity() * weight);
+                // Calculate the force based on the weight and the distance
                 Vec3 force = weight * (neighbor->getPosition() - particle->getPosition());
                 particle->addForce(force);
             }
