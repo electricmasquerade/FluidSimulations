@@ -14,7 +14,7 @@
 
 int main() {
     // Create the window and set up ImGui-SFML
-    sf::RenderWindow window(sf::VideoMode({640, 480}), "ImGui + SFML = <3");
+    sf::RenderWindow window(sf::VideoMode({500, 500}), "ImGui + SFML = <3");
     window.setFramerateLimit(120);
     ImGui::SFML::Init(window);
 
@@ -36,7 +36,7 @@ int main() {
         float velX = static_cast<float>((rand() % 101) - 50);
         float velY = static_cast<float>((rand() % 101) - 50);
         // Create a particle with mass, position, velocity, and a damping value of 1.0f
-        particles.push_back(Particle(mass, Vec3(posX, posY, 0.0f), Vec3(velX, velY, 0.0f), 1.0f));
+        particles.emplace_back(mass, Vec3(posX, posY, 0.0f), Vec3(velX, velY, 0.0f), 1.0f);
     }
     RenderLayer renderLayer(particles);
 

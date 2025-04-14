@@ -23,8 +23,22 @@ void Simulation::buildSpatialMap(const std::vector<std::shared_ptr<Particle>> &p
 
 }
 
+float Simulation::calculateDensity(const std::shared_ptr<Particle> &particle, const std::vector<std::shared_ptr<Particle>> &neighbors) {
+    float density = 0.0f;
+    const float smoothingLength = particle->getSmoothingLength();
+    for (const auto &neighbor : neighbors) {
+        float distance = particle->getNeighborDistance(*neighbor);
+        if (distance < smoothingLength) {
+            const float weight = smoothingFunction(distance, smoothingLength);
+            density += neighbor->getMass() * weight;
+        }
+    }
+    return density;
+
+}
+
 std::vector<std::shared_ptr<Particle>> Simulation::findNeighbors(const Particle &particle, const std::vector<std::shared_ptr<Particle>> &particles,
-                                                const float radius) {
+                                                                 const float radius) {
     std::vector<std::shared_ptr<Particle>> neighbors;
     Vec3 pos = particle.getPosition();
     int cellX = static_cast<int>(pos[0] / cellSize);
@@ -49,25 +63,53 @@ std::vector<std::shared_ptr<Particle>> Simulation::findNeighbors(const Particle 
     return neighbors;
 }
 
+void Simulation::initParticles(std::vector<std::shared_ptr<Particle>> &particles) {
+    if (particles.empty()) return;
+    this->particles = particles;
+    const int grid_size = static_cast<int>(std::sqrt(particles.size()));
+    const float spacing = domainSize / grid_size;
+    //Uniformly distribute particles across domain based on spacing for initial position
+    for (int i = 0; i < particles.size(); ++i) {
+        const float x = (i % static_cast<int>(grid_size)) * spacing;
+        const float y = (i / static_cast<int>(grid_size)) * spacing;
+        particles[i]->setPosition(Vec3(x, y, 0.0f));
+        particles[i]->setMass(1.0f); // Set mass to 1.0 for all particles
+        particles[i]->setSmoothingLength(cellSize); // Set smoothing length based on spacing
+        particles[i]->setDensity(restDensity); // Set rest density for all particles
+    }
+
+
+}
+
 void Simulation::updateParticles(const float dt) {
     // Build the spatial map for the current particles
     buildSpatialMap(particles);
 
     //Update all particles based on their neighbors and the kernel function
     for (auto &particle : particles) {
+        float density = 0.0f;
         particle->reset();
+        //only get variables like smoothing length once if possible
+        const float smoothingLength = particle->getSmoothingLength();
         // Find neighbors
         std::vector<std::shared_ptr<Particle>> neighbors = findNeighbors(*particle, particles, particle->getSmoothingLength());
         // Calculate forces based on neighbors
         for (const auto &neighbor : neighbors) {
             float distance = particle->getNeighborDistance(*neighbor);
-            if (distance < particle->getSmoothingLength()) {
-                float weight = smoothingFunction(distance, particle->getSmoothingLength());
-                //Calculate the density of the particle
-                particle->setDensity(particle->getDensity() + neighbor->getDensity() * weight);
-                // Calculate the force based on the weight and the distance
-                Vec3 force = weight * (neighbor->getPosition() - particle->getPosition());
-                particle->addForce(force);
+            if (distance < smoothingLength) {
+                const float weight = smoothingFunction(distance, smoothingLength);
+                //Calculate and update the density of the particle
+                particle->setDensity(calculateDensity(particle, neighbors));
+                //Calculate and update pressure at particle
+                float pressure = stiffness*( particle->getDensity() - restDensity);
+
+                //Now calculate forces based on pressure and density, navier stokes
+                //TODO: add viscosity and surface tension - how on earth
+                Vec3 pressureForce = (pressure / (particle->getDensity() * particle->getDensity())) * weight * (particle->getPosition() - neighbor->getPosition());
+
+                particle->addForce(pressureForce);
+
+
             }
         }
         // Update the particle

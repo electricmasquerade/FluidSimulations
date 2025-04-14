@@ -63,17 +63,17 @@ public:
     //Setters
     void setMass(const float mass) { this->mass = mass; }
     void setPosition(const Vec3& position){ this->position = position; }
-    void setDensity(float density){ this->density = density; }
+    void setDensity(const float density){ this->density = density; }
     void setVelocity(const Vec3& velocity){ this->velocity = velocity; }
     void setForce(const Vec3& force){ this->force = force; }
     void setAcceleration(const Vec3& acceleration){ this->acceleration = acceleration; }
-    void setPressure(float pressure){ this->pressure = pressure; }
-    void setSmoothingLength(float smoothingLength){ this->smoothingLength = smoothingLength; }
+    void setPressure(const float pressure){ this->pressure = pressure; }
+    void setSmoothingLength(const float smoothingLength){ this->smoothingLength = smoothingLength; }
     void setColor(const std::vector<int>& color) { this->color = color; }
 
 
 private:
-    float mass{};
+    float mass{1};
     Vec3 position{};
     Vec3 velocity{};
     Vec3 force{};

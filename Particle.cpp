@@ -29,10 +29,10 @@ void Particle::update(const float dt) {
     position += dt * velocity;
 
     //update color based on velocity
-    //TODO: update color based on actual metric P/pgh
-    const float speed = velocity.length();
-    const float normalizedSpeed = std::min(speed / maxParticleSpeed, 1.0f);
-    const float hue = 240 * (1 - normalizedSpeed); // Blue to red
+    //TODO: update color based on actual metric P/pgh, hydrostatic pressure
+    float hydrostatic = pressure / (density * 9.81f);
+
+    const float hue = 240 * (1 - hydrostatic); // Blue to red
     color = HelperFunctions::HSVtoRGB(static_cast<int>(hue), 1, 1);
     // Set the color based on the speed
 
