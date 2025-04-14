@@ -24,6 +24,30 @@ void Particle::reset() {
 }
 
 void Particle::update(const float dt) {
+    Vec3 pos = this->getPosition();
+    constexpr float domainMin = 0.0f;
+    constexpr float domainMax = 500.0f;
+    constexpr float bounceDamping = 0.3f;
+    constexpr float buffer = 1.0f; // Keep particle slightly away from edge
+
+    if (position[0] < domainMin) {
+        position[0] = domainMin + buffer;
+        velocity[0] *= -bounceDamping;
+    }
+    if (position[0] > domainMax) {
+        position[0] = domainMax - buffer;
+        velocity[0] *= -bounceDamping;
+    }
+    if (position[1] < domainMin) {
+        position[1] = domainMin + buffer;
+        velocity[1] *= -bounceDamping;
+    }
+    if (position[1] > domainMax) {
+        position[1] = domainMax - buffer;
+        velocity[1] *= -bounceDamping;
+    }
+
+
     acceleration = force / mass;
     velocity += dt * acceleration;
     position += dt * velocity;

@@ -4,7 +4,7 @@
  * @brief Initializes the particle shapes based on the provided particles.
  * @param particles The vector of particles to initialize.
  */
-void RenderLayer::initParticles(const std::vector<Particle> &particles) {
+void RenderLayer::initParticles(const std::vector<std::shared_ptr<Particle>> &particles) {
     particle_vertices.clear();
     particle_vertices.setPrimitiveType(sf::PrimitiveType::Points);
     particle_vertices.resize(particles.size());
@@ -15,16 +15,16 @@ void RenderLayer::initParticles(const std::vector<Particle> &particles) {
  * @brief Updates the shapes of the particles based on their current positions.
  * @param particles The vector of particles to update.
  */
-void RenderLayer::updateShapes(const std::vector<Particle> &particles) {
+void RenderLayer::updateShapes(const std::vector<std::shared_ptr<Particle>> &particles) {
     if (particles.empty()) {
         return;
     }
     particle_vertices.resize(particles.size());
 
     for (std::size_t i = 0; i < particles.size(); ++i) {
-        Vec3 pos = particles[i].getPosition();
+        Vec3 pos = particles[i]->getPosition();
         particle_vertices[i].position = sf::Vector2f(pos[0], pos[1]);
-        std::vector<int> color = particles[i].getColor();
+        std::vector<int> color = particles[i]->getColor();
         particle_vertices[i].color = sf::Color(color[0], color[1], color[2]);
 
     }

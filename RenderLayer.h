@@ -12,13 +12,13 @@
 //this is an interface layer designed to handle all the rendering steps to draw particles.
 class RenderLayer {
 public:
-    explicit RenderLayer(const std::vector<Particle>& particles) {
+    explicit RenderLayer(const std::vector<std::shared_ptr<Particle>>& particles) {
         this->initParticles(particles);
     }
     ~RenderLayer() = default;
 
-    void initParticles(const std::vector<Particle> &particles);
-    void updateShapes(const std::vector<Particle> &particles);
+    void initParticles(const std::vector<std::shared_ptr<Particle>> &particles);
+    void updateShapes(const std::vector<std::shared_ptr<Particle>> &particles);
     void drawParticles(sf::RenderWindow &window) const;
     // [[nodiscard]] const std::vector<sf::CircleShape> &getParticleShapes() const {
     //     return particleShapes;
