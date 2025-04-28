@@ -38,7 +38,8 @@ public:
         initParticles(particles);
     }
     ~Simulation() = default;
-    float smoothingFunction(float r, float h);
+    float smoothingPoly6(float r, float h);
+    Vec3 spikyGradient(const Vec3 &r_vec, float h);
     void buildSpatialMap(const std::vector<std::shared_ptr<Particle>> &particles);
     float calculateDensity(const std::shared_ptr<Particle> &particle, const std::vector<std::shared_ptr<Particle>> &neighbors);
     std::vector<std::shared_ptr<Particle>> findNeighbors(const Particle &particle, const std::vector<std::shared_ptr<Particle>> &particles, float radius);
@@ -52,6 +53,7 @@ private:
     float stiffness{1.0f}; // Stiffness of the fluid, tune for stability
     float restDensity{1.0f}; // Rest density of the fluid, calculate during init particles.
     std::vector<std::shared_ptr<Particle>> particles;
+    std::vector<std::shared_ptr<Particle>> ghostParticles; //for boundary handling
     std::unordered_map<CellKey, std::vector<std::shared_ptr<Particle>>, CellKeyHash> spatialMap; // Hash map for spatial partitioning
     //Create a struct to store the keys for the particle grid during spatial partitioning
 

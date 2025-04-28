@@ -24,7 +24,6 @@ void Particle::reset() {
 }
 
 void Particle::update(const float dt) {
-    Vec3 pos = this->getPosition();
     constexpr float domainMin = 0.0f;
     constexpr float domainMax = 500.0f;
     constexpr float bounceDamping = 0.3f;

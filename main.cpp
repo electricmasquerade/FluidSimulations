@@ -27,10 +27,10 @@ int main() {
 
 
     // Create many particles for testing
-    constexpr int numParticles = 1000; // You can adjust this number as needed.
+    constexpr int numParticles = 2000; // You can adjust this number as needed.
     constexpr float domainSize = static_cast<int>(windowWidth);
-    constexpr float cellSize = 50.0f;
-    constexpr float stiffness = 10;
+    constexpr float cellSize = 20.0f;
+    constexpr float stiffness = 100;
     constexpr float restDensity = 1.0f;
 
     std::vector<std::shared_ptr<Particle>> particles;
@@ -39,7 +39,7 @@ int main() {
         //Create particles with default values for now to put into simulation
         Particle particle;
         //particle.setPosition(Vec3(rand() % window.getSize().x, rand() % window.getSize().y, 0.0f));
-        //particle.setVelocity(Vec3((rand() % 20 - 10) * 0.1f, (rand() % 20 - 10) * 0.1f, 0.0f));
+        particle.setVelocity(Vec3((rand() % 20 - 10), (rand() % 20 - 10), 0.0f));
         particles.push_back(std::make_shared<Particle>(particle));
 
     }

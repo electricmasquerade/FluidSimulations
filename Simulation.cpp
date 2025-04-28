@@ -1,19 +1,38 @@
 
 #include "Simulation.h"
 
-float Simulation::smoothingFunction(const float r, const float h) { //r is the radius, h is the smoothing length
+float Simulation::smoothingPoly6(const float r, const float h) { //r is the radius, h is the smoothing length
     // Implement the smoothing function here
-    // using poly6 kernel for now, only defined where r < h
+    // using 2D poly6 kernel for now, only defined where r < h
     if (r < h) {
-        const float weight = 315.0f / (64.0f * M_PI * std::pow(h, 9)) * std::pow(h * h - r * r, 3);
-        return weight * 2000.0f; // Scale the weight to a reasonable value
+        const float weight = 4.0f / (M_PI * std::pow(h, 8)) * std::pow(h * h - r * r, 3);
+        return weight; //* 2000.0f; // Scale the weight to a reasonable value
     }
     return 0.0f;
+}
+
+Vec3 Simulation::spikyGradient(const Vec3 &r_vec, float h) {
+    float r = r_vec.length();
+    if (r > 0 && r < h) {
+        const float coeff = -30.0f / (M_PI * std::pow(h,5));
+
+        const float magnitude = coeff * (h-r) * (h-r);
+
+        return -magnitude * (r_vec/r);
+    }
+    return {0, 0, 0};
 }
 
 void Simulation::buildSpatialMap(const std::vector<std::shared_ptr<Particle>> &particles) {
     spatialMap.clear();
     for (const auto & particle : particles) {
+        Vec3 pos = particle->getPosition();
+        const int cellX = static_cast<int>(std::floor(pos[0] / cellSize));
+        const int cellY = static_cast<int>(std::floor(pos[1] / cellSize));
+        CellKey key{cellX, cellY};
+        spatialMap[key].push_back(particle);
+    }
+    for (const auto & particle : ghostParticles) {
         Vec3 pos = particle->getPosition();
         const int cellX = static_cast<int>(std::floor(pos[0] / cellSize));
         const int cellY = static_cast<int>(std::floor(pos[1] / cellSize));
@@ -29,7 +48,7 @@ float Simulation::calculateDensity(const std::shared_ptr<Particle> &particle, co
     for (const auto &neighbor : neighbors) {
         float distance = particle->getNeighborDistance(*neighbor);
         if (distance < smoothingLength) {
-            const float weight = smoothingFunction(distance, smoothingLength);
+            const float weight = smoothingPoly6(distance, smoothingLength);
             density += neighbor->getMass() * weight;
         }
     }
@@ -79,7 +98,22 @@ void Simulation::initParticles(std::vector<std::shared_ptr<Particle>> &particles
         particles[i]->setPosition(Vec3(x, y, 0.0f));
         particles[i]->setMass(1.0f); // Set mass to 1.0 for all particles
         particles[i]->setSmoothingLength(spacing * 1.5); // Set smoothing length based on spacing
-        particles[i]->setDensity(restDensity); // Set rest density for all particles
+        auto neighbors = findNeighbors(*particles[i], particles, particles[i]->getSmoothingLength());
+        particles[i]->setDensity(calculateDensity(particles[i], neighbors));
+        particles[i]->setPressure(stiffness * (particles[i]->getDensity() - restDensity));
+    }
+
+    //add ghost particles outside the boundary evenly spaced
+    for (int i = 0; i < grid_size; ++i) {
+        float x = i * spacing;
+        float y = -spacing * 0.5f;
+        auto ghostParticle = std::make_shared<Particle>();
+        ghostParticle->setPosition(Vec3(x, y, 0.0f));
+        ghostParticle->setMass(1.0f); // Set mass to 1.0 for all particles
+        ghostParticle->setSmoothingLength(spacing * 1.5); // Set smoothing length based on spacing
+        ghostParticle->setDensity(restDensity); // Set rest density for all particles
+        ghostParticle->setPressure(0.0f); // Set pressure to 0 for ghost particles
+        ghostParticles.push_back(ghostParticle);
     }
 
 
@@ -101,7 +135,7 @@ void Simulation::updateParticles(const float dt) {
     //Now update pressure for all particles.
     for (auto &particle : particles) {
         float pressure = stiffness * (particle->getDensity() - restDensity);
-        pressure = std::clamp(pressure, 0.0f, 100.0f);  // You can tune this max value
+        pressure = std::clamp(pressure, -100.0f, 100.0f);  // You can tune this max value
         particle->setPressure(pressure);
 
     }
@@ -115,25 +149,53 @@ void Simulation::updateParticles(const float dt) {
             float distance = particle->getNeighborDistance(*neighbor);
             if (distance < particle->getSmoothingLength()) {
                 // Calculate force based on pressure and density differences
-                float forceMagnitude = stiffness * (particle->getPressure() / (particle->getDensity() * particle->getDensity()) +
-                                                    neighbor->getPressure() / (neighbor->getDensity() * neighbor->getDensity()));
-                Vec3 forceDirection = unitVector(particle->getPosition() - neighbor->getPosition());
+
+                //Test spiky kernel here
+                Vec3 r_vec = particle->getPosition() - neighbor->getPosition();
+                float h = particle->getSmoothingLength();
+
+                //Compute spiky gradient for pressure force
+                Vec3 spiky = spikyGradient(r_vec, h);
+
+                //Create pressure term
+                float pressure = (particle->getPressure() + neighbor->getPressure()) / (2.0f * neighbor->getDensity());
+
+                //Calculate pressure force
+                Vec3 pressureForce = -neighbor->getMass() * pressure * spiky;
+
+                //Add viscosity force
                 Vec3 viscosityForce = viscosity * (neighbor->getVelocity() - particle->getVelocity());
+                Vec3 force = pressureForce + viscosityForce;
 
-                Vec3 force = forceMagnitude * forceDirection + viscosityForce;
-                //apply gravity
-                force += Vec3(0, 0.05f*gravity * particle->getDensity(), 0);
-                const Vec3 drag = -0.1f * particle->getVelocity();
-                force += drag;
 
-                float maxForce = 1000.0f;
-                if (forceMagnitude > maxForce) {
-                    force = maxForce * forceDirection;
-                }
+
+
+                // float forceMagnitude = stiffness * (particle->getPressure() / (particle->getDensity() * particle->getDensity()) +
+                //                                     neighbor->getPressure() / (neighbor->getDensity() * neighbor->getDensity()));
+                // Vec3 forceDirection = unitVector(particle->getPosition() - neighbor->getPosition());
+                // Vec3 viscosityForce = viscosity * (neighbor->getVelocity() - particle->getVelocity());
+                //
+                // Vec3 force = forceMagnitude * forceDirection + viscosityForce;
+                // //apply gravity
+                // force += Vec3(0, particle->getMass() * gravity, 0);
+                // const Vec3 drag = -0.1f * particle->getVelocity();
+                // force += drag;
+
+                // float maxForce = 1000.0f;
+                // if (forceMagnitude > maxForce) {
+                //     force = maxForce * forceDirection;
+                // }
                 //std::cout << "forceMagnitude: " << forceMagnitude << std::endl;
                 particle->addForce(force);
             }
+
         }
+        //Apply gravity
+        particle->addForce(Vec3(0, particle->getMass() * gravity, 0));
+
+        // Apply drag
+        const Vec3 drag = -0.1f * particle->getVelocity();
+        particle->addForce(drag);
     }
     //Now update all particles with their forces
     for (auto &particle : particles) {
