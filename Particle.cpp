@@ -25,28 +25,37 @@ void Particle::reset() {
 
 void Particle::update(const float dt) {
     constexpr float domainMin = 0.0f;
-    constexpr float domainMax = 500.0f;
+    constexpr float domainMax = 800.0f;
     constexpr float bounceDamping = 0.3f;
     constexpr float buffer = 1.0f; // Keep particle slightly away from edge
     acceleration = force / mass;
     velocity += dt * acceleration;
     position += dt * velocity;
-    // if (position[0] < domainMin) {
-    //     position[0] = domainMin + buffer;
-    //     velocity[0] *= -bounceDamping;
-    // }
-    // if (position[0] > domainMax) {
-    //     position[0] = domainMax - buffer;
-    //     velocity[0] *= -bounceDamping;
-    // }
-    // if (position[1] < domainMin) {
-    //     position[1] = domainMin + buffer;
-    //     velocity[1] *= -bounceDamping;
-    // }
-    // if (position[1] > domainMax) {
-    //     position[1] = domainMax - buffer;
-    //     velocity[1] *= -bounceDamping;
-    // }
+    if (position[0] < domainMin) {
+        position[0] = domainMin + buffer;
+        velocity[0] *= -bounceDamping;
+    }
+    if (position[0] > domainMax) {
+        position[0] = domainMax - buffer;
+        velocity[0] *= -bounceDamping;
+    }
+    if (position[1] < domainMin) {
+        position[1] = domainMin + buffer;
+        velocity[1] *= -bounceDamping;
+    }
+    if (position[1] > domainMax) {
+        position[1] = domainMax - buffer;
+        velocity[1] *= -bounceDamping;
+    }
+
+    //print if out of range for debugging
+    if (position.x() > domainMax || position.x() < domainMin) {
+        std::cout << position.x() << std::endl;
+    }
+    if (position.y() > domainMax || position.y() < domainMin) {
+        std::cout << position.y() << std::endl;
+    }
+
 
 
 

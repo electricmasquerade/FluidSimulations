@@ -41,19 +41,20 @@ public:
     ~Simulation() = default;
     float smoothingPoly6(float r, float h);
     Vec3 spikyGradient(const Vec3 &r_vec, float h);
-    Vec3 viscosityLaplacian(const Vec3 &r_vec, float h);
+    float viscosityLaplacian(const Vec3 &r_vec, float h);
     void buildSpatialMap(const std::vector<std::shared_ptr<Particle>> &particles);
     float calculateDensity(const std::shared_ptr<Particle> &particle, const std::vector<std::shared_ptr<Particle>> &neighbors);
-    std::vector<std::shared_ptr<Particle>> findNeighbors(const Particle &particle, const std::vector<std::shared_ptr<Particle>> &particles, float radius);
+    std::vector<std::shared_ptr<Particle>> findNeighbors(std::shared_ptr<Particle> particle, float radius);
     void initParticles(std::vector<std::shared_ptr<Particle>> &particles);
     void updateParticles(float dt);
 
     void setGravity(const float gravity){this->gravity = gravity;}
     float calculatePressure(const std::shared_ptr<Particle>& particle) const;
     void calibrateRestDensity();
+    //void applyMirrorParticle(std::shared_ptr<Particle> &particle, const Vec3 &ghostPos);
 
 private:
-    float gravity{0.0f}; // Gravitational acceleration, always constant
+    float gravity{9.0f}; // Gravitational acceleration, always constant
     float domainSize{500.0f}; // Size of the simulation domain
     float cellSize{20.0f}; // Size of each cell in the grid, replace with smoothing length later
     float stiffness{1.0f}; // Stiffness of the fluid, tune for stability

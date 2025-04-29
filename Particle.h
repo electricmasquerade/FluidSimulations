@@ -89,7 +89,7 @@ private:
     //Specific SPH simulation variables
     float density{};
     float minDensity{0};
-    float maxDensity{10};
+    float maxDensity{5};
     float pressure{};
     float smoothingLength{};
 
