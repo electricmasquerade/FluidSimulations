@@ -36,6 +36,7 @@ public:
         const float restDensity, const float viscosity) : domainSize(domainSize), cellSize(cellSize), stiffness(stiffness), restDensity(restDensity), particles(particles), viscosity(viscosity) {
         // Initialize the simulation with the provided particles and custom parameters
         initParticles(particles);
+        //calibrateRestDensity();
     }
     ~Simulation() = default;
     float smoothingPoly6(float r, float h);
@@ -47,8 +48,12 @@ public:
     void initParticles(std::vector<std::shared_ptr<Particle>> &particles);
     void updateParticles(float dt);
 
+    void setGravity(const float gravity){this->gravity = gravity;}
+    float calculatePressure(const std::shared_ptr<Particle>& particle) const;
+    void calibrateRestDensity();
+
 private:
-    float gravity{0}; // Gravitational acceleration, always constant
+    float gravity{0.0f}; // Gravitational acceleration, always constant
     float domainSize{500.0f}; // Size of the simulation domain
     float cellSize{20.0f}; // Size of each cell in the grid, replace with smoothing length later
     float stiffness{1.0f}; // Stiffness of the fluid, tune for stability

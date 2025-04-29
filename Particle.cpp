@@ -28,7 +28,9 @@ void Particle::update(const float dt) {
     constexpr float domainMax = 500.0f;
     constexpr float bounceDamping = 0.3f;
     constexpr float buffer = 1.0f; // Keep particle slightly away from edge
-
+    acceleration = force / mass;
+    velocity += dt * acceleration;
+    position += dt * velocity;
     // if (position[0] < domainMin) {
     //     position[0] = domainMin + buffer;
     //     velocity[0] *= -bounceDamping;
@@ -47,9 +49,7 @@ void Particle::update(const float dt) {
     // }
 
 
-    acceleration = force / mass;
-    velocity += dt * acceleration;
-    position += dt * velocity;
+
 
     //update color based on density
     // Normalize density to a range of 0 to 1

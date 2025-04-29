@@ -29,11 +29,11 @@ int main() {
     constexpr int numParticles = 2000; // You can adjust this number as needed.
     constexpr float domainSize = static_cast<int>(windowWidth);
     float spacing = domainSize / std::sqrt(static_cast<float>(numParticles));
-    float smoothingLength = 1.5f * spacing;
+    float smoothingLength = 2 * spacing;
     float cellSize = smoothingLength;
     constexpr float stiffness = 100;
     constexpr float restDensity = 1.0f;
-    constexpr float viscosity = 20.0f;
+    constexpr float viscosity = 5.0f;
 
     std::vector<std::shared_ptr<Particle>> particles;
     particles.reserve(numParticles);
@@ -48,6 +48,26 @@ int main() {
     }
     Simulation simulation(particles, domainSize, cellSize, stiffness, restDensity, viscosity);
     RenderLayer renderLayer(particles);
+
+    //arrange particles into a ball in the center
+    float centerX = windowWidth / 2.0f;
+    float centerY = windowWidth / 2.0f;
+    float radius = windowWidth / 4.0f;  // Use 1/4 of window width as radius
+
+    for (size_t i = 0; i < particles.size(); ++i) {
+        // Calculate angle for uniform distribution
+        float angle = (2.0f * M_PI * i) / particles.size();
+        
+        // Calculate random radius (smaller than max radius) for more natural distribution
+        float randRadius = radius * std::sqrt(static_cast<float>(rand()) / RAND_MAX);
+        
+        // Calculate position using polar coordinates
+        float x = centerX + randRadius * std::cos(angle);
+        float y = centerY + randRadius * std::sin(angle);
+        
+        particles[i]->setPosition(Vec3(x, y, 0.0f));
+        particles[i]->setVelocity(Vec3(0.0f, 0.0f, 0.0f)); // Start with zero velocity
+    }
 
 
 
@@ -77,17 +97,16 @@ int main() {
         // ImGui window for simulation controls
         ImGui::SetNextWindowPos(ImVec2(0, 0));
         ImGui::SetNextWindowBgAlpha(0.5f);
-        ImGui::SetNextWindowSize(ImVec2(250, 120));
-        ImGui::Begin("Controls");
+        //ImGui::SetNextWindowSize(ImVec2(250, 120));
+        ImGui::Begin("Controls", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 
         ImGui::Checkbox("Running", &isRunning);
-        ImGui::Text("Particle 0 Position: (%.1f, %.1f)", particles[0]->getPosition()[0], particles[0]->getPosition()[1]);
 
         if (!isRunning) {
-            // When paused, allow manual control of the first particle
-            ImGui::SliderFloat("X Position", &sliderX, 0.f, static_cast<float>(window.getSize().x));
-            ImGui::SliderFloat("Y Position", &sliderY, 0.f, static_cast<float>(window.getSize().y));
-            particles[0]->setPosition(Vec3(sliderX, sliderY, 0.0f));
+            // When paused, allow control of various variables
+            static float gravity = 0.0f;
+            ImGui::SliderFloat("Gravity", &gravity, -10.0f, 10.0f);
+            simulation.setGravity(gravity);
         } else {
             // Update all particles when simulation is running
             for (auto &p : particles) {
@@ -95,19 +114,25 @@ int main() {
             }
         }
 
-        if (ImGui::Button("Change Color of Particle 0")) {
-            // Change the first particle's color to a random color
-            particles[0]->setColor(std::vector<int>({
-                rand() % 256, rand() % 256, rand() % 256
-            }));
-        }
+        // if (ImGui::Button("Change Color of Particle 0")) {
+        //     // Change the first particle's color to a random color
+        //     particles[0]->setColor(std::vector<int>({
+        //         rand() % 256, rand() % 256, rand() % 256
+        //     }));
+        // }
+        //add slider for gravity, linked to simulation->set gravity
+        ImVec2 controls_pos = ImGui::GetWindowSize();
         ImGui::End();
 
         // ImGui window for displaying simulation data (e.g., frame rate)
-        ImGui::SetNextWindowPos(ImVec2(260, 0));
+        //adjusts position based on size of a previous window, i.e. get size of controls
+
+
+
+        ImGui::SetNextWindowPos(ImVec2(controls_pos.x, 0));
         ImGui::SetNextWindowBgAlpha(0.5f);
-        ImGui::SetNextWindowSize(ImVec2(200, 100));
-        ImGui::Begin("Simulation Data");
+        //ImGui::SetNextWindowSize(ImVec2(200, 100));
+        ImGui::Begin("Simulation Data", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
         ImGui::Text("Frame Rate: %.1f FPS", 1.0f / ImGui::GetIO().DeltaTime);
         ImGui::End();
 

@@ -61,6 +61,7 @@ float Simulation::calculateDensity(const std::shared_ptr<Particle> &particle, co
         if (distance < smoothingLength) {
             const float weight = smoothingPoly6(distance, smoothingLength);
             density += neighbor->getMass() * weight;
+            density += particle->getMass() * smoothingPoly6(0, smoothingLength); // Add the mass of the current particle
         }
     }
     density = std::max(density, 0.01f);  // or even 1e-3f
@@ -73,11 +74,12 @@ std::vector<std::shared_ptr<Particle>> Simulation::findNeighbors(const Particle 
                                                                  const float radius) {
     std::vector<std::shared_ptr<Particle>> neighbors;
     Vec3 pos = particle.getPosition();
-    int cellX = static_cast<int>(pos[0] / cellSize);
-    int cellY = static_cast<int>(pos[1] / cellSize);
+    const int cellX = static_cast<int>(pos[0] / cellSize);
+    const int cellY = static_cast<int>(pos[1] / cellSize);
+    constexpr int depth = 1;
     // Check home cell and all neighboring cells, only one row deep for now
-    for (int dx = -1; dx <= 1; ++dx) {
-        for (int dy = -1; dy <= 1; ++dy) {
+    for (int dx = -depth; dx <= depth; ++dx) {
+        for (int dy = -depth; dy <= depth; ++dy) {
             CellKey key{cellX + dx, cellY + dy};
             if (spatialMap.find(key) != spatialMap.end()) {
                 for (const auto & neighbor : spatialMap[key]) {
@@ -100,8 +102,10 @@ std::vector<std::shared_ptr<Particle>> Simulation::findNeighbors(const Particle 
 void Simulation::initParticles(std::vector<std::shared_ptr<Particle>> &particles) {
     neighborList.clear();
     neighborList.resize(particles.size());
+    ghostParticles.clear();
     if (particles.empty()) return;
     this->particles = particles;
+    restDensity = particles[0]->getMass();
     const int grid_size = static_cast<int>(std::sqrt(particles.size()));
     const float spacing = domainSize / static_cast<float>(grid_size);
     //Uniformly distribute particles across domain based on spacing for the initial position
@@ -110,26 +114,31 @@ void Simulation::initParticles(std::vector<std::shared_ptr<Particle>> &particles
         const float y = (i / static_cast<int>(grid_size)) * spacing;
         particles[i]->setPosition(Vec3(x, y, 0.0f));
         particles[i]->setMass(1.0f); // Set mass to 1.0 for all particles
-        particles[i]->setSmoothingLength(spacing* 1.5f); // Set a smoothing length based on spacing
+        particles[i]->setSmoothingLength(cellSize); // Set a smoothing length based on spacing
         auto neighbors = findNeighbors(*particles[i], particles, particles[i]->getSmoothingLength());
         particles[i]->setDensity(calculateDensity(particles[i], neighbors));
-        particles[i]->setPressure(stiffness * (particles[i]->getDensity() - restDensity));
+        //restDensity = calculateDensity(particles[i], neighbors);
+        float pressure = calculatePressure(particles[i]);
+
+        particles[i]->setPressure(pressure);
+
     }
 
-    float h = spacing * 1.5f;
-    float ghostSpacing = spacing * 0.25f;
-    const int numGhostLayers = ceil(h/ghostSpacing);
-    float offset = ghostSpacing;
+    //const float h = spacing * 1.5f;
+    const float ghostSpacing = spacing * 0.25f;
+    const int numGhostLayers = ceil(cellSize/ghostSpacing);
+    const float offset = ghostSpacing;
     for (int i = 0; i < grid_size; ++i) {
-        float x = i * spacing;
-        float ghostMass = 1.0f;
+        const float x = i * spacing;
         for (int layer = 1; layer <= numGhostLayers; ++layer) {
+            constexpr float ghostMass = 1.0f;
             //bottom
             auto ghostBottom = std::make_shared<Particle>();
             ghostBottom->setPosition(Vec3(x, -layer * offset, 0.0f));
             ghostBottom->setMass(ghostMass); // Set mass to 1.0 for all particles
-            ghostBottom->setSmoothingLength(h); // Set smoothing length based on spacing
-            ghostBottom->setDensity(restDensity); // Set rest density for all particles
+            ghostBottom->setSmoothingLength(cellSize); // Set smoothing length based on spacing
+            auto ghostNeighbors = findNeighbors(*ghostBottom, particles, ghostBottom->getSmoothingLength());
+            ghostBottom->setDensity(calculateDensity(ghostBottom, ghostNeighbors)); // Set rest density for all particles
             ghostBottom->setPressure(0.0f); // Set pressure to 0 for ghost particles
             ghostParticles.push_back(ghostBottom);
 
@@ -137,8 +146,9 @@ void Simulation::initParticles(std::vector<std::shared_ptr<Particle>> &particles
             auto ghostTop = std::make_shared<Particle>();
             ghostTop->setPosition(Vec3(x, domainSize + layer * offset, 0.0f));
             ghostTop->setMass(ghostMass); // Set mass to 1.0 for all particles
-            ghostTop->setSmoothingLength(h); // Set smoothing length based on spacing
-            ghostTop->setDensity(restDensity); // Set rest density for all particles
+            ghostTop->setSmoothingLength(cellSize); // Set smoothing length based on spacing
+            ghostNeighbors = findNeighbors(*ghostTop, particles, ghostTop->getSmoothingLength());
+            ghostTop->setDensity(calculateDensity(ghostTop, ghostNeighbors)); // Set rest density for all particles
             ghostTop->setPressure(0.0f); // Set pressure to 0 for ghost particles
             ghostParticles.push_back(ghostTop);
 
@@ -146,8 +156,9 @@ void Simulation::initParticles(std::vector<std::shared_ptr<Particle>> &particles
             auto ghostLeft = std::make_shared<Particle>();
             ghostLeft->setPosition(Vec3(-layer * offset, x, 0.0f));
             ghostLeft->setMass(ghostMass); // Set mass to 1.0 for all particles
-            ghostLeft->setSmoothingLength(h); // Set smoothing length based on spacing
-            ghostLeft->setDensity(restDensity); // Set rest density for all particles
+            ghostLeft->setSmoothingLength(cellSize); // Set smoothing length based on spacing
+            ghostNeighbors = findNeighbors(*ghostLeft, particles, ghostLeft->getSmoothingLength());
+            ghostLeft->setDensity(calculateDensity(ghostLeft, ghostNeighbors));
             ghostLeft->setPressure(0.0f); // Set pressure to 0 for ghost particles
             ghostParticles.push_back(ghostLeft);
 
@@ -155,8 +166,9 @@ void Simulation::initParticles(std::vector<std::shared_ptr<Particle>> &particles
             auto ghostRight = std::make_shared<Particle>();
             ghostRight->setPosition(Vec3(domainSize + layer * offset, x, 0.0f));
             ghostRight->setMass(ghostMass); // Set mass to 1.0 for all particles
-            ghostRight->setSmoothingLength(h); // Set smoothing length based on spacing
-            ghostRight->setDensity(restDensity); // Set rest density for all particles
+            ghostRight->setSmoothingLength(cellSize); // Set smoothing length based on spacing
+            ghostNeighbors = findNeighbors(*ghostRight, particles, ghostRight->getSmoothingLength());
+            ghostRight->setDensity(calculateDensity(ghostRight, ghostNeighbors));
             ghostRight->setPressure(0.0f); // Set pressure to 0 for ghost particles
             ghostParticles.push_back(ghostRight);
 
@@ -211,15 +223,13 @@ void Simulation::updateParticles(const float dt) {
 
         ++index;
     }
-    constexpr float y = 7.0f;
-    constexpr float c0 = 20;
-    const float B = (c0 * c0 * restDensity)/ y;
+
     //Now update pressure for all particles.
     for (auto &particle : particles) {
         //update the maximum density of each particle for accurate coloring
         particle->setMaxDensity(maxDensity);
 
-        float pressure = B* (std::pow(particle->getDensity() / restDensity, y)-1.0f);
+        float pressure = calculatePressure(particle);
 
         //float pressure = stiffness * (particle->getDensity() - restDensity);
         //pressure = std::clamp(pressure, -1000.0f, 1000.0f);  // You can tune this max value
@@ -232,9 +242,9 @@ void Simulation::updateParticles(const float dt) {
         float ghostDensity = calculateDensity(ghost, neighborsGhost);
         ghostDensity = std::max(ghostDensity, restDensity);  // or even 1e-3f
         ghost->setDensity(ghostDensity);
-        float pressure = B* (std::pow(ghost->getDensity() / restDensity, y)-1.0f);
+        float pressure = calculatePressure(ghost);
         //clamp to avoid negative pressure
-        pressure = std::max(0.0f, pressure);  // You can tune this max value
+        //pressure = std::max(0.0f, pressure);  // You can tune this max value
         ghost->setPressure(pressure);
     }
     //Now update forces for all particles.
@@ -257,10 +267,10 @@ void Simulation::updateParticles(const float dt) {
                 Vec3 spiky = spikyGradient(r_vec, h);
 
                 //Create pressure term
-                float pressure = (particle->getPressure() + neighbor->getPressure()) / (2.0f * neighbor->getDensity());
+                const float pressure = (particle->getPressure() + neighbor->getPressure()) / (2.0f * neighbor->getDensity());
 
                 //Calculate pressure force
-                Vec3 pressureForce = -neighbor->getMass() * pressure * spiky;
+                Vec3 pressureForce = neighbor->getMass() * pressure * spiky;
 
                 //Add viscosity force using laplacian
                 Vec3 laplacian = viscosityLaplacian(r_vec, h);
@@ -288,4 +298,24 @@ void Simulation::updateParticles(const float dt) {
         //std::cout << "ρ: " << particle->getDensity() << "  P: " << particle->getPressure() << std::endl;
         particle->update(dt);
     }
+}
+
+float Simulation::calculatePressure(const std::shared_ptr<Particle>& particle) const
+ {
+    constexpr float y = 7.0f;
+    constexpr float c0 = 150;
+    const float B = (c0 * c0 * restDensity)/ y;
+    float pressure = B* (std::pow(particle->getDensity() / restDensity, y)-1.0f);
+    return pressure;
+}
+
+void Simulation::calibrateRestDensity() {
+    float sum = 0;
+    for (size_t i = 0; i < particles.size(); ++i) {
+        auto &p = particles[i];
+        auto nbrs = findNeighbors(*p, particles, p->getSmoothingLength());
+        sum += calculateDensity(p, nbrs);
+    }
+    restDensity = sum / particles.size();
+    std::cout << "Calibrated restDensity = " << restDensity << "\n";
 }
