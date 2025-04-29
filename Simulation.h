@@ -33,13 +33,14 @@ public:
         initParticles(particles);
     }
     Simulation(std::vector<std::shared_ptr<Particle>> &particles, const float domainSize, const float cellSize, const float stiffness,
-        const float restDensity) : domainSize(domainSize), cellSize(cellSize), stiffness(stiffness), restDensity(restDensity), particles(particles) {
+        const float restDensity, const float viscosity) : domainSize(domainSize), cellSize(cellSize), stiffness(stiffness), restDensity(restDensity), particles(particles), viscosity(viscosity) {
         // Initialize the simulation with the provided particles and custom parameters
         initParticles(particles);
     }
     ~Simulation() = default;
     float smoothingPoly6(float r, float h);
     Vec3 spikyGradient(const Vec3 &r_vec, float h);
+    Vec3 viscosityLaplacian(const Vec3 &r_vec, float h);
     void buildSpatialMap(const std::vector<std::shared_ptr<Particle>> &particles);
     float calculateDensity(const std::shared_ptr<Particle> &particle, const std::vector<std::shared_ptr<Particle>> &neighbors);
     std::vector<std::shared_ptr<Particle>> findNeighbors(const Particle &particle, const std::vector<std::shared_ptr<Particle>> &particles, float radius);
@@ -47,17 +48,17 @@ public:
     void updateParticles(float dt);
 
 private:
-    float gravity{9.81f}; // Gravitational acceleration, always constant
+    float gravity{0}; // Gravitational acceleration, always constant
     float domainSize{500.0f}; // Size of the simulation domain
     float cellSize{20.0f}; // Size of each cell in the grid, replace with smoothing length later
     float stiffness{1.0f}; // Stiffness of the fluid, tune for stability
     float restDensity{1.0f}; // Rest density of the fluid, calculate during init particles.
+    float viscosity{0.0f};
+    float maxDensity{0.0f};
     std::vector<std::shared_ptr<Particle>> particles;
     std::vector<std::shared_ptr<Particle>> ghostParticles; //for boundary handling
     std::unordered_map<CellKey, std::vector<std::shared_ptr<Particle>>, CellKeyHash> spatialMap; // Hash map for spatial partitioning
-    //Create a struct to store the keys for the particle grid during spatial partitioning
-
-
+    std::vector<std::vector<std::shared_ptr<Particle>>> neighborList;
 };
 
 

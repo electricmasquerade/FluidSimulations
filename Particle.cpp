@@ -29,33 +29,35 @@ void Particle::update(const float dt) {
     constexpr float bounceDamping = 0.3f;
     constexpr float buffer = 1.0f; // Keep particle slightly away from edge
 
-    if (position[0] < domainMin) {
-        position[0] = domainMin + buffer;
-        velocity[0] *= -bounceDamping;
-    }
-    if (position[0] > domainMax) {
-        position[0] = domainMax - buffer;
-        velocity[0] *= -bounceDamping;
-    }
-    if (position[1] < domainMin) {
-        position[1] = domainMin + buffer;
-        velocity[1] *= -bounceDamping;
-    }
-    if (position[1] > domainMax) {
-        position[1] = domainMax - buffer;
-        velocity[1] *= -bounceDamping;
-    }
+    // if (position[0] < domainMin) {
+    //     position[0] = domainMin + buffer;
+    //     velocity[0] *= -bounceDamping;
+    // }
+    // if (position[0] > domainMax) {
+    //     position[0] = domainMax - buffer;
+    //     velocity[0] *= -bounceDamping;
+    // }
+    // if (position[1] < domainMin) {
+    //     position[1] = domainMin + buffer;
+    //     velocity[1] *= -bounceDamping;
+    // }
+    // if (position[1] > domainMax) {
+    //     position[1] = domainMax - buffer;
+    //     velocity[1] *= -bounceDamping;
+    // }
 
 
     acceleration = force / mass;
     velocity += dt * acceleration;
     position += dt * velocity;
 
-    //update color based on velocity
-    //TODO: update color based on actual metric P/pgh, hydrostatic pressure
-    float hydrostatic = pressure / (density * 9.81f);
+    //update color based on density
+    // Normalize density to a range of 0 to 1
+    const float densityRange = maxDensity - minDensity;
+    const float normalizedDensity = (density - minDensity) / densityRange;
 
-    const float hue = 240 * (1 - hydrostatic); // Blue to red
+
+    const float hue = 240 * (1 - normalizedDensity); // Blue to red
     color = HelperFunctions::HSVtoRGB(static_cast<int>(hue), 1, 1);
     // Set the color based on the speed
 

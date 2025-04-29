@@ -40,6 +40,8 @@ public:
     [[nodiscard]] Vec3 getForce() const { return force; }
     [[nodiscard]] Vec3 getAcceleration() const { return acceleration; }
     [[nodiscard]] float getDensity() const { return density; }
+    [[nodiscard]] float getMinDensity() const { return minDensity; }
+    [[nodiscard]] float getMaxDensity() const { return maxDensity; }
     [[nodiscard]] float getPressure() const { return pressure; }
     [[nodiscard]] float getMass() const { return mass; }
     [[nodiscard]] float getSmoothingLength() const { return smoothingLength; }
@@ -47,6 +49,8 @@ public:
     [[nodiscard]] std::vector<int> getColor() const {
         return color;
     }
+
+
 
 
     //Normalized getters
@@ -64,6 +68,8 @@ public:
     void setMass(const float mass) { this->mass = mass; }
     void setPosition(const Vec3& position){ this->position = position; }
     void setDensity(const float density){ this->density = density; }
+    void setMaxDensity(const float maxDensity){ this->maxDensity = maxDensity; }
+    void setMinDensity(const float minDensity){ this->minDensity = minDensity; }
     void setVelocity(const Vec3& velocity){ this->velocity = velocity; }
     void setForce(const Vec3& force){ this->force = force; }
     void setAcceleration(const Vec3& acceleration){ this->acceleration = acceleration; }
@@ -78,10 +84,12 @@ private:
     Vec3 velocity{};
     Vec3 force{};
     Vec3 acceleration{};
-    std::vector<int> color{};
+    std::vector<int> color{0,0,1}; // Default color blue
 
     //Specific SPH simulation variables
     float density{};
+    float minDensity{0};
+    float maxDensity{10};
     float pressure{};
     float smoothingLength{};
 

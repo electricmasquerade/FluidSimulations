@@ -25,13 +25,15 @@ int main() {
     std::srand(static_cast<unsigned int>(std::time(nullptr)));
 
 
-
     // Create many particles for testing
     constexpr int numParticles = 2000; // You can adjust this number as needed.
     constexpr float domainSize = static_cast<int>(windowWidth);
-    constexpr float cellSize = 20.0f;
+    float spacing = domainSize / std::sqrt(static_cast<float>(numParticles));
+    float smoothingLength = 1.5f * spacing;
+    float cellSize = smoothingLength;
     constexpr float stiffness = 100;
     constexpr float restDensity = 1.0f;
+    constexpr float viscosity = 20.0f;
 
     std::vector<std::shared_ptr<Particle>> particles;
     particles.reserve(numParticles);
@@ -39,12 +41,14 @@ int main() {
         //Create particles with default values for now to put into simulation
         Particle particle;
         //particle.setPosition(Vec3(rand() % window.getSize().x, rand() % window.getSize().y, 0.0f));
-        particle.setVelocity(Vec3((rand() % 20 - 10), (rand() % 20 - 10), 0.0f));
+        particle.setVelocity(Vec3((rand() % 100), (rand() % 100), 0.0f));
+        particle.setSmoothingLength(smoothingLength);
         particles.push_back(std::make_shared<Particle>(particle));
 
     }
-    Simulation simulation(particles, domainSize, cellSize, stiffness, restDensity);
+    Simulation simulation(particles, domainSize, cellSize, stiffness, restDensity, viscosity);
     RenderLayer renderLayer(particles);
+
 
 
     sf::Clock deltaClock;
