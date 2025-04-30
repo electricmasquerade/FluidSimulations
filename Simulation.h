@@ -47,6 +47,8 @@ public:
     std::vector<std::shared_ptr<Particle>> findNeighbors(std::shared_ptr<Particle> particle, float radius);
     void initParticles(std::vector<std::shared_ptr<Particle>> &particles);
     void updateParticles(float dt);
+    void setSmoothingLength(const float smoothingLength) {this->smoothingLength = smoothingLength;}
+    void setDomainSize(const float domainSize) {this->domainSize = domainSize;}
 
     void setGravity(const float gravity){this->gravity = gravity;}
     float calculatePressure(const std::shared_ptr<Particle>& particle) const;
@@ -58,9 +60,11 @@ private:
     float domainSize{500.0f}; // Size of the simulation domain
     float cellSize{20.0f}; // Size of each cell in the grid, replace with smoothing length later
     float stiffness{1.0f}; // Stiffness of the fluid, tune for stability
-    float restDensity{1.0f}; // Rest density of the fluid, calculate during init particles.
-    float viscosity{0.0f};
-    float maxDensity{0.0f};
+    float restDensity{1000.0f}; // Rest density of the fluid, calculate during init particles.
+    float viscosity{10.0f};
+    float maxDensity{1000.0f};
+    float gridSize{domainSize / cellSize};
+    float smoothingLength{cellSize};
     std::vector<std::shared_ptr<Particle>> particles;
     std::vector<std::shared_ptr<Particle>> ghostParticles; //for boundary handling
     std::unordered_map<CellKey, std::vector<std::shared_ptr<Particle>>, CellKeyHash> spatialMap; // Hash map for spatial partitioning

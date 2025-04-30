@@ -28,14 +28,14 @@ int main() {
 
 
     // Create many particles for testing
-    constexpr int numParticles = 3000; // You can adjust this number as needed.
+    constexpr int numParticles = 2000; // You can adjust this number as needed.
     constexpr float domainSize = static_cast<int>(windowWidth);
     float spacing = domainSize / std::sqrt(static_cast<float>(numParticles));
     float smoothingLength = 2 * spacing;
     float cellSize = smoothingLength;
     constexpr float stiffness = 10;
-    constexpr float restDensity = 1.0f;
-    constexpr float viscosity = 100.0f;
+    constexpr float restDensity = 1000.0f;
+    constexpr float viscosity = 1000.0f;
 
     std::vector<std::shared_ptr<Particle>> particles;
     particles.reserve(numParticles);
@@ -45,7 +45,7 @@ int main() {
         //particle.setPosition(Vec3(rand() % window.getSize().x, rand() % window.getSize().y, 0.0f));
         particle.setVelocity(Vec3((rand() % 50), (rand() % 50), 0.0f));
         particle.setSmoothingLength(smoothingLength);
-        particle.setMaxDensity(numParticles/20);
+        //particle.setMaxDensity(numParticles/20);
         particles.push_back(std::make_shared<Particle>(particle));
 
     }
@@ -69,7 +69,7 @@ int main() {
         float y = centerY + randRadius * std::sin(angle);
 
         particles[i]->setPosition(Vec3(x, y, 0.0f));
-        particles[i]->setVelocity(Vec3((rand() % 100), (rand() % 100), 0.0f));
+        particles[i]->setVelocity(Vec3((rand() % 20), (rand() % 20), 0.0f));
         //particles[i]->setVelocity(Vec3(0.0f, 0.0f, 0.0f)); // Start with zero velocity
     }
 
@@ -77,10 +77,8 @@ int main() {
     //simulation.calibrateRestDensity();
     sf::Clock deltaClock;
     static bool isRunning = true;
-    // Variables to control the first particle when paused
-    static float sliderX = particles[0]->getPosition()[0];
-    static float sliderY = particles[0]->getPosition()[1];
 
+    // Main loop
     while (window.isOpen()) {
         while (const auto event = window.pollEvent()) {
             ImGui::SFML::ProcessEvent(window, *event);

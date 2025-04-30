@@ -104,21 +104,23 @@ void Simulation::initParticles(std::vector<std::shared_ptr<Particle> > &particle
     ghostParticles.clear();
     if (particles.empty()) return;
     this->particles = particles;
-    restDensity = particles[0]->getMass();
+    //restDensity = particles[0]->getMass();
     const int grid_size = static_cast<int>(std::sqrt(particles.size()));
     const float spacing = domainSize / static_cast<float>(grid_size);
     float h = spacing * 1.5f;
+    cellSize = h;
+    const float mass = restDensity * spacing * spacing;
     //Uniformly distribute particles across domain based on spacing for the initial position
     for (int i = 0; i < particles.size(); ++i) {
         const float x = (i % static_cast<int>(grid_size)) * spacing;
         const float y = (i / static_cast<int>(grid_size)) * spacing;
         particles[i]->setPosition(Vec3(x, y, 0.0f));
-        particles[i]->setMass(1.0f); // Set mass to 1.0 for all particles
+        particles[i]->setMass(mass); // Set mass to 1.0 for all particles
         particles[i]->setSmoothingLength(h); // Set a smoothing length based on spacing
-        //auto neighbors = findNeighbors(particles[i], particles[i]->getSmoothingLength());
-        //particles[i]->setDensity(calculateDensity(particles[i], neighbors));
+        auto neighbors = findNeighbors(particles[i], particles[i]->getSmoothingLength());
+        particles[i]->setDensity(calculateDensity(particles[i], neighbors));
         //restDensity = calculateDensity(particles[i], neighbors);
-        //float pressure = calculatePressure(particles[i]);
+        float pressure = calculatePressure(particles[i]);
 
         //particles[i]->setPressure(pressure);
     }
@@ -129,8 +131,8 @@ void Simulation::initParticles(std::vector<std::shared_ptr<Particle> > &particle
         p->setDensity(calculateDensity(p, nbrs));
         p->setPressure(calculatePressure(p));
     }
-    calibrateRestDensity(); // recomputes restDensity from that first‐frame average
-    cellSize = h;
+    //calibrateRestDensity(); // recomputes restDensity from that first‐frame average
+
     // const float ghostSpacing = spacing * 0.25f;
     // const int numGhostLayers = ceil(h / ghostSpacing);
     // const float offset = ghostSpacing;
@@ -299,7 +301,7 @@ void Simulation::updateParticles(const float dt) {
 
 float Simulation::calculatePressure(const std::shared_ptr<Particle> &particle) const {
     constexpr float y = 7.0f;
-    constexpr float c0 = 10.0f;
+    constexpr float c0 = 20.0f;
     const float B = (c0 * c0 * restDensity) / y;
     float pressure = B * (std::pow(particle->getDensity() / restDensity, y) - 1.0f);
     return pressure;
