@@ -104,10 +104,11 @@ void Simulation::initParticles(std::vector<std::shared_ptr<Particle> > &particle
     ghostParticles.clear();
     if (particles.empty()) return;
     this->particles = particles;
-    restDensity = particles[0]->getMass();
+    //restDensity = particles[0]->getMass();
     const int grid_size = static_cast<int>(std::sqrt(particles.size()));
     const float spacing = domainSize / static_cast<float>(grid_size);
     float h = spacing * 1.5f;
+    //float mass = spacing * spacing *restDensity;
     //Uniformly distribute particles across domain based on spacing for the initial position
     for (int i = 0; i < particles.size(); ++i) {
         const float x = (i % static_cast<int>(grid_size)) * spacing;

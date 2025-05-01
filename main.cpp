@@ -28,7 +28,7 @@ int main() {
 
 
     // Create many particles for testing
-    constexpr int numParticles = 3000; // You can adjust this number as needed.
+    constexpr int numParticles = 2000; // You can adjust this number as needed.
     constexpr float domainSize = static_cast<int>(windowWidth);
     float spacing = domainSize / std::sqrt(static_cast<float>(numParticles));
     float smoothingLength = 2 * spacing;
